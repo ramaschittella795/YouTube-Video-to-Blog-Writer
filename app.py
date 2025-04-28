@@ -20,13 +20,25 @@ llm = ChatOpenAI(
 # 3. Helper: Extract video ID from URL (robust for both desktop and mobile)
 def extract_video_id(url):
     """
-    Extract the video ID from both full YouTube URLs and shortened youtu.be links.
+    Extract the video ID from any YouTube URL, including short youtu.be links with parameters.
     """
-    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
+    # First try full length YouTube URL
+    pattern = r"(?:v=|\/)([0-9A-Za-z_-]{11})"
+    match = re.search(pattern, url)
     if match:
         return match.group(1)
-    else:
-        raise ValueError("Invalid YouTube URL format.")
+    
+    # As a fallback, for shortened URLs like youtu.be/VIDEO_ID
+    # Clean up URL first if it has ?si=... parameters
+    if "youtu.be" in url:
+        parts = url.split("/")
+        video_id_part = parts[-1]
+        # Remove URL parameters if present
+        video_id = video_id_part.split("?")[0]
+        if len(video_id) == 11:
+            return video_id
+
+    raise ValueError("Invalid YouTube URL format.")
 
 # 4. Helper: Fetch transcript with error handling
 def fetch_transcript_from_url(url):
